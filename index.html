@@ -60,7 +60,7 @@
       letter-spacing: -0.5px;
       line-height: 1.1;
     }
-    header h1 span { color: var(--rose-400); }
+    header h1 span { color: #f4a0b5; }
     header p {
       font-size: 0.76rem;
       color: var(--gray-400);
@@ -146,21 +146,23 @@
 
     .icon-btn {
       background: none;
-      border: none;
+      border: 1px solid var(--gray-200);
       cursor: pointer;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
+      padding: 4px 10px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s;
-      color: var(--gray-400);
-      font-size: 1rem;
+      transition: all 0.15s;
+      color: var(--gray-300);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.2px;
     }
-    .icon-btn:hover { background: var(--gray-100); color: var(--gray-600); }
-    .icon-btn.danger { color: var(--gray-300); }
-    .icon-btn.danger:hover { background: var(--rose-50); color: var(--gray-500); }
+    .icon-btn:hover { background: var(--gray-100); color: var(--gray-500); border-color: var(--gray-300); }
+    .icon-btn.danger { color: var(--gray-300); border-color: var(--gray-200); }
+    .icon-btn.danger:hover { background: var(--rose-50); color: var(--rose-300); border-color: var(--rose-200); }
 
     .section-body { padding: 16px 20px; }
 
@@ -534,8 +536,8 @@ function renderSection(sec) {
     <div class="section-header">
       <span class="section-name">${esc(sec.name)}</span>
       <div class="section-actions">
-        <button class="icon-btn" onclick="openEditSection('${sec.id}')" title="Editar">⚙️</button>
-        <button class="icon-btn danger" onclick="openConfirm('seção','${sec.id}',null)" title="Excluir"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L4 12M4 4L12 12" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="icon-btn" onclick="openEditSection('${sec.id}')" title="Editar">alterar</button>
+        <button class="icon-btn danger" onclick="openConfirm('seção','${sec.id}',null)" title="Excluir">excluir</button>
       </div>
     </div>
     <div class="section-body">
@@ -551,8 +553,8 @@ function renderExercise(sectionId, ex) {
     <div class="exercise-top">
       <span class="exercise-name">${esc(ex.name)}</span>
       <div class="exercise-actions">
-        <button class="icon-btn" onclick="openEditExercise('${sectionId}','${ex.id}')" title="Editar">⚙️</button>
-        <button class="icon-btn danger" onclick="openConfirm('exercício','${sectionId}','${ex.id}')" title="Excluir"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L4 12M4 4L12 12" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="icon-btn" onclick="openEditExercise('${sectionId}','${ex.id}')" title="Editar">alterar</button>
+        <button class="icon-btn danger" onclick="openConfirm('exercício','${sectionId}','${ex.id}')" title="Excluir">excluir</button>
       </div>
     </div>
     <div class="counters">
