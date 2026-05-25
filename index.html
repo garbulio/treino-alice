@@ -171,23 +171,27 @@
       background: var(--gray-50);
       border: 1px solid var(--gray-200);
       border-radius: var(--radius-sm);
-      padding: 14px 16px;
+      padding: 12px 12px;
       margin-bottom: 12px;
       animation: fadeIn 0.25s ease;
+      overflow: hidden;
     }
     .exercise-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
+      gap: 8px;
     }
     .exercise-name {
       font-family: 'Playfair Display', serif;
       font-weight: 600;
-      font-size: 1.05rem;
+      font-size: 1rem;
       color: var(--gray-800);
+      flex: 1;
+      min-width: 0;
     }
-    .exercise-actions { display: flex; gap: 4px; }
+    .exercise-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
     /* ── COUNTERS ── */
     .counters {
@@ -217,14 +221,46 @@
       justify-content: center;
       gap: 6px;
     }
+    /* ── COUNTERS ── */
+    .counters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .counter-box {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+      min-width: 0;
+    }
+    .counter-label {
+      font-size: 0.6rem;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .counter-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
     .counter-btn {
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       border: 1.5px solid var(--rose-200);
       background: var(--white);
       color: var(--rose-400);
-      font-size: 1rem;
+      font-size: 0.9rem;
       line-height: 1;
       cursor: pointer;
       display: flex;
@@ -232,14 +268,15 @@
       justify-content: center;
       transition: all 0.15s;
       font-weight: 600;
+      flex-shrink: 0;
     }
     .counter-btn:hover { background: var(--rose-100); border-color: var(--rose-300); }
     .counter-value {
       font-family: 'Playfair Display', serif;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--gray-800);
-      min-width: 32px;
+      min-width: 24px;
       text-align: center;
     }
 
