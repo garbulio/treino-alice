@@ -146,7 +146,7 @@
 
     .icon-btn {
       background: none;
-      border: 1px solid var(--gray-200);
+      border: 1px solid #ececec;
       cursor: pointer;
       padding: 4px 10px;
       border-radius: 20px;
@@ -154,14 +154,14 @@
       align-items: center;
       justify-content: center;
       transition: all 0.15s;
-      color: var(--gray-300);
+      color: #d4d4d8;
       font-family: 'DM Sans', sans-serif;
       font-size: 0.72rem;
       font-weight: 500;
       letter-spacing: 0.2px;
     }
-    .icon-btn:hover { background: var(--gray-100); color: var(--gray-500); border-color: var(--gray-300); }
-    .icon-btn.danger { color: var(--gray-300); border-color: var(--gray-200); }
+    .icon-btn:hover { background: var(--gray-100); color: var(--gray-400); border-color: var(--gray-200); }
+    .icon-btn.danger { color: #e4c5ce; border-color: #f0e0e4; }
     .icon-btn.danger:hover { background: var(--rose-50); color: var(--rose-300); border-color: var(--rose-200); }
 
     .section-body { padding: 16px 20px; }
@@ -739,9 +739,63 @@ function confirmDelete(secId, exId) {
   render();
 }
 
+// ─── DADOS INICIAIS ───────────────────────────────────────────
+const DEFAULT_DATA = {
+  sections: [
+    {
+      id: genId(), name: 'Quadríceps',
+      exercises: [
+        { id: genId(), name: 'Agachamento Livre',            sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Cadeira Extensora',            sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Hack',                         sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Agachamento Búlgaro',          sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Panturrilha na Máquina',       sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Abdominal Funcional (Ab Wheel)',sets: 3, reps: 12, weight: 0, notes: '' },
+      ]
+    },
+    {
+      id: genId(), name: 'Ombro + Peito + Tríceps',
+      exercises: [
+        { id: genId(), name: 'Desenvolvimento Halteres',     sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Elevação Lateral Polia',       sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Face Pull',                    sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Supino Halteres',              sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Rosca Tríceps (Corda)',        sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Tríceps (Banco)',              sets: 3, reps: 12, weight: 0, notes: '' },
+      ]
+    },
+    {
+      id: genId(), name: 'Posterior + Glúteo',
+      exercises: [
+        { id: genId(), name: 'Stiff com Barra',             sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Extensão na Polia',           sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Elevação Pélvica (Smith)',    sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Abdutor na Máquina',          sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Mesa Flexora',                sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Abdominal',                   sets: 3, reps: 12, weight: 0, notes: '' },
+      ]
+    },
+    {
+      id: genId(), name: 'Costas + Bíceps',
+      exercises: [
+        { id: genId(), name: 'Pulldown',                         sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Remada Barra Livre',               sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Rosca Direta Barra',               sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Rosca Martelo',                    sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Remada Halteres (Unilateral)',     sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Abdominal',                        sets: 3, reps: 12, weight: 0, notes: '' },
+      ]
+    }
+  ]
+};
+
 // ─── INIT ─────────────────────────────────────────────────────
 async function init() {
   loadState();
+  if (state.sections.length === 0) {
+    state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    saveLocal();
+  }
   render();
   if (useSupabase) {
     setSyncStatus('offline', 'Carregando...');
