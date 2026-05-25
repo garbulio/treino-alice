@@ -558,9 +558,9 @@ function renderExercise(sectionId, ex) {
       </div>
     </div>
     <div class="counters">
-      ${renderCounter(sectionId, ex.id, 'peso', 'Peso / kg', ex.peso, 0.5)}
-      ${renderCounter(sectionId, ex.id, 'series', 'Séries', ex.series, 1)}
-      ${renderCounter(sectionId, ex.id, 'reps', 'Repetições', ex.reps, 1)}
+      ${renderCounter(sectionId, ex.id, 'peso',   'Peso / kg',   ex.peso   ?? 0,  0.5)}
+      ${renderCounter(sectionId, ex.id, 'series', 'Séries',      ex.series ?? 3,  1)}
+      ${renderCounter(sectionId, ex.id, 'reps',   'Repetições',  ex.reps   ?? 12, 1)}
     </div>
     <textarea class="exercise-notes"
       placeholder="Observações (opcional)…"
@@ -595,7 +595,7 @@ function changeCounter(secId, exId, field, delta) {
   if (!ex) return;
   const min = field === 'peso' ? 0 : 1;
   const step = field === 'peso' ? 0.5 : 1;
-  let val = parseFloat(ex[field]) + delta;
+  let val = parseFloat(ex[field] ?? 0) + delta;
   val = Math.max(min, Math.round(val / step) * step);
   ex[field] = val;
   const el = document.getElementById(`cnt-${exId}-${field}`);
@@ -745,45 +745,45 @@ const DEFAULT_DATA = {
     {
       id: genId(), name: 'Quadríceps',
       exercises: [
-        { id: genId(), name: 'Agachamento Livre',            sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Cadeira Extensora',            sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Hack',                         sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Agachamento Búlgaro',          sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Panturrilha na Máquina',       sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Abdominal Funcional (Ab Wheel)',sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Agachamento Livre',             peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Cadeira Extensora',             peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Hack',                          peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Agachamento Búlgaro',           peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Panturrilha na Máquina',        peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Abdominal Funcional (Ab Wheel)',peso: 0, series: 3, reps: 12, notes: '' },
       ]
     },
     {
       id: genId(), name: 'Ombro + Peito + Tríceps',
       exercises: [
-        { id: genId(), name: 'Desenvolvimento Halteres',     sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Elevação Lateral Polia',       sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Face Pull',                    sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Supino Halteres',              sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Rosca Tríceps (Corda)',        sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Tríceps (Banco)',              sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Desenvolvimento Halteres',  peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Elevação Lateral Polia',    peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Face Pull',                 peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Supino Halteres',           peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Rosca Tríceps (Corda)',     peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Tríceps (Banco)',           peso: 0, series: 3, reps: 12, notes: '' },
       ]
     },
     {
       id: genId(), name: 'Posterior + Glúteo',
       exercises: [
-        { id: genId(), name: 'Stiff com Barra',             sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Extensão na Polia',           sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Elevação Pélvica (Smith)',    sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Abdutor na Máquina',          sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Mesa Flexora',                sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Abdominal',                   sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Stiff com Barra',           peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Extensão na Polia',         peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Elevação Pélvica (Smith)',  peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Abdutor na Máquina',        peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Mesa Flexora',              peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Abdominal',                 peso: 0, series: 3, reps: 12, notes: '' },
       ]
     },
     {
       id: genId(), name: 'Costas + Bíceps',
       exercises: [
-        { id: genId(), name: 'Pulldown',                         sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Remada Barra Livre',               sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Rosca Direta Barra',               sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Rosca Martelo',                    sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Remada Halteres (Unilateral)',     sets: 3, reps: 12, weight: 0, notes: '' },
-        { id: genId(), name: 'Abdominal',                        sets: 3, reps: 12, weight: 0, notes: '' },
+        { id: genId(), name: 'Pulldown',                      peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Remada Barra Livre',            peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Rosca Direta Barra',            peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Rosca Martelo',                 peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Remada Halteres (Unilateral)',  peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Abdominal',                     peso: 0, series: 3, reps: 12, notes: '' },
       ]
     }
   ]
