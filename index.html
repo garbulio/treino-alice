@@ -726,10 +726,13 @@ function toggleSection(secId) {
     expandedSectionId = null;
   } else {
     expandedSectionId = secId;
-    // scroll to top after render
     setTimeout(() => {
       const el = document.getElementById('sec-' + secId);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) {
+        const headerHeight = document.querySelector('header').offsetHeight;
+        const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 12;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
     }, 50);
   }
   render();
