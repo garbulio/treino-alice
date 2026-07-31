@@ -89,6 +89,7 @@
       color: var(--gray-400);
     }
     #sync-status.online { background: var(--gray-100); color: var(--gray-400); }
+    #sync-status.pending { background: var(--gray-100); color: var(--gray-400); }
     #sync-status.offline { background: #ffeaea; color: #c0392b; }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
     .sync-wrap { display: flex; justify-content: center; }
@@ -528,6 +529,19 @@ const useSupabase = SUPABASE_URL !== '' && SUPABASE_ANON_KEY !== '';
 let state = { sections: [] };
 let saveTimer = null;
 let expandedSectionId = null; // only one section open at a time
+let pendingSync = localStorage.getItem('meu-treino-pending-sync') === '1';
+
+// Fetch com timeout, pra não travar esperando resposta em conexão instável
+function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+function markPendingSync(value) {
+  pendingSync = value;
+  localStorage.setItem('meu-treino-pending-sync', value ? '1' : '0');
+}
 
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -547,8 +561,16 @@ function saveLocal() {
 
 async function saveSupabase() {
   if (!useSupabase) return;
+
+  if (!navigator.onLine) {
+    markPendingSync(true);
+    setSyncStatus('pending', 'Offline · salvo no dispositivo');
+    return;
+  }
+
+  setSyncStatus('pending', 'Sincronizando...');
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/treino_data`, {
+    const res = await fetchWithTimeout(`${SUPABASE_URL}/rest/v1/treino_data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -558,17 +580,26 @@ async function saveSupabase() {
       },
       body: JSON.stringify({ id: 'alice', data: JSON.stringify(state) })
     });
-    if (res.ok) setSyncStatus('online', 'Salvo na nuvem ✓');
-    else setSyncStatus('offline', 'Erro ao salvar');
+    if (res.ok) {
+      markPendingSync(false);
+      setSyncStatus('online', 'Salvo na nuvem ✓');
+    } else {
+      markPendingSync(true);
+      setSyncStatus('offline', 'Erro ao salvar');
+    }
   } catch(e) {
-    setSyncStatus('offline', 'Sem conexão');
+    markPendingSync(true);
+    // Se a rede caiu no meio da tentativa, tratamos como offline (não é erro real)
+    setSyncStatus(navigator.onLine ? 'offline' : 'pending',
+      navigator.onLine ? 'Erro ao salvar' : 'Offline · salvo no dispositivo');
   }
 }
 
 async function loadSupabase() {
   if (!useSupabase) return false;
+  if (!navigator.onLine) return false;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/treino_data?id=eq.alice`, {
+    const res = await fetchWithTimeout(`${SUPABASE_URL}/rest/v1/treino_data?id=eq.alice`, {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -577,11 +608,12 @@ async function loadSupabase() {
     const rows = await res.json();
     if (rows && rows[0] && rows[0].data) {
       state = JSON.parse(rows[0].data);
+      saveLocal();
       setSyncStatus('online', 'Sincronizado ✓');
       return true;
     }
   } catch(e) {
-    setSyncStatus('offline', 'Modo offline');
+    setSyncStatus('pending', 'Offline · usando dados salvos');
   }
   return false;
 }
@@ -589,8 +621,8 @@ async function loadSupabase() {
 function setSyncStatus(type, text) {
   const el = document.getElementById('sync-status');
   const txt = document.getElementById('sync-text');
-  // 'online' and default = gray; 'offline' = red (error only)
-  el.className = type === 'offline' ? 'offline' : 'online';
+  // 'online'/'pending' = cinza (normal); 'offline' = vermelho (erro real, não desconexão)
+  el.className = type === 'offline' ? 'offline' : (type === 'pending' ? 'pending' : 'online');
   txt.textContent = text;
 }
 
@@ -599,6 +631,19 @@ function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveSupabase, 1500);
 }
+
+// ─── RECONEXÃO AUTOMÁTICA ──────────────────────────────────────
+window.addEventListener('online', () => {
+  if (pendingSync) {
+    setSyncStatus('pending', 'Conexão voltou · sincronizando...');
+    saveSupabase();
+  }
+});
+
+window.addEventListener('offline', () => {
+  markPendingSync(true);
+  setSyncStatus('pending', 'Offline · você pode continuar usando');
+});
 
 // ─── RENDER ──────────────────────────────────────────────────
 function render() {
@@ -919,11 +964,18 @@ async function init() {
     state = JSON.parse(JSON.stringify(DEFAULT_DATA));
     saveLocal();
   }
-  render();
+  render(); // renderiza na hora com os dados locais, sem esperar rede
+
+  if (!navigator.onLine) {
+    setSyncStatus('pending', 'Offline · dados salvos no dispositivo');
+    return;
+  }
+
   if (useSupabase) {
-    setSyncStatus('offline', 'Carregando...');
+    setSyncStatus('pending', 'Sincronizando...');
     const loaded = await loadSupabase();
     if (loaded) render();
+    else if (pendingSync) saveSupabase(); // havia alterações pendentes de uma sessão offline anterior
   }
 }
 
