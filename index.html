@@ -142,10 +142,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
       border-bottom: 1px solid var(--rose-100);
       transition: background 0.2s;
       user-select: none;
     }
+    .section-title-wrap { flex: 1 1 0; min-width: 0; }
+    .section-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .section-header-active {
       background: linear-gradient(120deg, #f9c6d4 0%, #f7b8ca 100%);
       border-bottom: 1px solid #f4a0b5;
@@ -180,6 +183,7 @@
       border-color: #d4607a;
       color: #d4607a;
     }
+    .collapse-chevron {
       font-size: 1.3rem;
       color: #f4a0b5;
       line-height: 1;
@@ -197,8 +201,9 @@
       font-weight: 600;
       color: var(--gray-800);
       flex: 1;
+      overflow-wrap: anywhere;
     }
-    .section-actions { display: flex; gap: 6px; }
+    .section-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
     .icon-btn {
       background: none;
@@ -246,6 +251,7 @@
       color: var(--gray-800);
       flex: 1;
       min-width: 0;
+      overflow-wrap: anywhere;
     }
     .exercise-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
@@ -332,27 +338,46 @@
       font-size: 0.95rem;
       font-weight: 700;
       color: var(--gray-800);
-      min-width: 24px;
+      min-width: 20px;
       text-align: center;
     }
 
-    /* ── NOTES ── */
-    .exercise-notes {
+    /* ── PESO DIGITÁVEL ── */
+    .counter-input {
+      flex: 1 1 0;
+      min-width: 0;
       width: 100%;
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.82rem;
-      color: var(--gray-600);
-      resize: none;
+      border: none;
+      background: transparent;
       outline: none;
-      transition: border-color 0.2s;
-      min-height: 36px;
+      padding: 0;
+      border-radius: 6px;
+      font-family: 'Playfair Display', serif;
+      font-size: 16px; /* 16px evita o zoom automático do iPhone ao focar */
+      font-weight: 700;
+      color: var(--gray-800);
+      text-align: center;
+      -webkit-appearance: none;
+      appearance: none;
     }
-    .exercise-notes:focus { border-color: var(--rose-300); }
-    .exercise-notes::placeholder { color: var(--gray-300); }
+    .counter-input:focus { background: var(--rose-50); }
+
+    /* ── BLOCOS: AQUECIMENTO / SÉRIES VÁLIDAS ── */
+    .exercise-block + .exercise-block { margin-top: 12px; }
+    .exercise-block .counters {
+      margin-bottom: 0;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .block-title {
+      display: block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
 
     /* ── ADD EXERCISE BTN ── */
     .add-exercise-btn {
@@ -548,11 +573,24 @@ function genId() {
 }
 
 // ─── PERSISTÊNCIA ────────────────────────────────────────────
+// Garante os campos do aquecimento e peso inteiro em dados antigos
+function migrateState() {
+  (state.sections || []).forEach(sec => {
+    (sec.exercises || []).forEach(ex => {
+      ex.peso = Math.round(parseFloat(ex.peso ?? 0)) || 0;
+      ex.peso_aq = Math.round(parseFloat(ex.peso_aq ?? 0)) || 0;
+      ex.series_aq = ex.series_aq ?? 0;
+      ex.reps_aq = ex.reps_aq ?? 0;
+    });
+  });
+}
+
 function loadState() {
   const raw = localStorage.getItem('meu-treino-alice');
   if (raw) {
     try { state = JSON.parse(raw); } catch(e) { state = { sections: [] }; }
   }
+  migrateState();
 }
 
 function saveLocal() {
@@ -608,6 +646,7 @@ async function loadSupabase() {
     const rows = await res.json();
     if (rows && rows[0] && rows[0].data) {
       state = JSON.parse(rows[0].data);
+      migrateState();
       saveLocal();
       setSyncStatus('online', 'Sincronizado ✓');
       return true;
@@ -658,16 +697,6 @@ function render() {
   emptyState.style.display = 'none';
 
   container.innerHTML = state.sections.map(sec => renderSection(sec)).join('');
-
-  // bind notes textarea change
-  container.querySelectorAll('.exercise-notes').forEach(ta => {
-    ta.addEventListener('change', e => {
-      const { sectionId, exerciseId } = e.target.dataset;
-      const sec = state.sections.find(s => s.id === sectionId);
-      const ex = sec && sec.exercises.find(ex => ex.id === exerciseId);
-      if (ex) { ex.notes = e.target.value; scheduleSave(); }
-    });
-  });
 }
 
 function renderSection(sec) {
@@ -677,11 +706,11 @@ function renderSection(sec) {
   return `
   <div class="section-card ${isExpanded ? 'section-active' : ''}" id="sec-${sec.id}">
     <div class="section-header ${isExpanded ? 'section-header-active' : ''}" onclick="toggleSection('${sec.id}')" style="cursor:pointer">
-      <div style="flex:1;min-width:0">
-        <span class="section-name">${esc(sec.name)}</span>
+      <div class="section-title-wrap">
+        <span class="section-name">${escTitle(sec.name)}</span>
         ${!isExpanded ? `<span class="section-count">${count} exercício${count !== 1 ? 's' : ''}</span>` : ''}
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div class="section-right">
         <div class="section-actions" onclick="event.stopPropagation()">
           <button class="icon-btn" onclick="openEditSection('${sec.id}')" title="Editar">alterar</button>
           <button class="icon-btn danger" onclick="openConfirm('seção','${sec.id}',null)" title="Excluir">excluir</button>
@@ -707,30 +736,46 @@ function renderExercise(sectionId, ex) {
         <button class="icon-btn danger" onclick="openConfirm('exercício','${sectionId}','${ex.id}')" title="Excluir">excluir</button>
       </div>
     </div>
-    <div class="counters">
-      ${renderCounter(sectionId, ex.id, 'peso',   'Peso / kg',   ex.peso   ?? 0,  0.5)}
-      ${renderCounter(sectionId, ex.id, 'series', 'Séries',      ex.series ?? 3,  1)}
-      ${renderCounter(sectionId, ex.id, 'reps',   'Repetições',  ex.reps   ?? 12, 1)}
+    <div class="exercise-block">
+      <span class="block-title">Aquecimento</span>
+      <div class="counters">
+        ${renderCounter(sectionId, ex.id, 'peso_aq',   'Peso / kg',   ex.peso_aq   ?? 0, 1)}
+        ${renderCounter(sectionId, ex.id, 'series_aq', 'Séries',      ex.series_aq ?? 0, 1)}
+        ${renderCounter(sectionId, ex.id, 'reps_aq',   'Repetições',  ex.reps_aq   ?? 0, 1)}
+      </div>
     </div>
-    <textarea class="exercise-notes"
-      placeholder="Observações (opcional)…"
-      data-section-id="${sectionId}"
-      data-exercise-id="${ex.id}"
-      rows="1"
-    >${esc(ex.notes || '')}</textarea>
+    <div class="exercise-block">
+      <span class="block-title">Séries válidas</span>
+      <div class="counters">
+        ${renderCounter(sectionId, ex.id, 'peso',   'Peso / kg',   ex.peso   ?? 0,  1)}
+        ${renderCounter(sectionId, ex.id, 'series', 'Séries',      ex.series ?? 3,  1)}
+        ${renderCounter(sectionId, ex.id, 'reps',   'Repetições',  ex.reps   ?? 12, 1)}
+      </div>
+    </div>
   </div>`;
 }
 
 function renderCounter(secId, exId, field, label, value, step) {
+  // Peso (aquecimento e séries válidas) é digitável; séries e repetições só com − e +
+  const valueEl = field.startsWith('peso')
+    ? `<input class="counter-input" id="cnt-${exId}-${field}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="${value}" aria-label="${label}"
+         onfocus="this.select()" oninput="onlyDigits(this)" onchange="setPeso('${secId}','${exId}','${field}',this)"
+         onkeydown="if(event.key==='Enter')this.blur()" />`
+    : `<span class="counter-value" id="cnt-${exId}-${field}">${value}</span>`;
   return `
   <div class="counter-box">
     <span class="counter-label">${label}</span>
     <div class="counter-controls">
       <button class="counter-btn" onclick="changeCounter('${secId}','${exId}','${field}',${-step})">−</button>
-      <span class="counter-value" id="cnt-${exId}-${field}">${value}</span>
+      ${valueEl}
       <button class="counter-btn" onclick="changeCounter('${secId}','${exId}','${field}',${step})">+</button>
     </div>
   </div>`;
+}
+
+// Título com quebra de linha permitida depois do "+"
+function escTitle(str) {
+  return esc(str).replace(/\+/g, '+<wbr>');
 }
 
 function esc(str) {
@@ -743,13 +788,29 @@ function changeCounter(secId, exId, field, delta) {
   if (!sec) return;
   const ex = sec.exercises.find(e => e.id === exId);
   if (!ex) return;
-  const min = field === 'peso' ? 0 : 1;
-  const step = field === 'peso' ? 0.5 : 1;
-  let val = parseFloat(ex[field] ?? 0) + delta;
-  val = Math.max(min, Math.round(val / step) * step);
+  // peso e aquecimento podem ir até 0; séries e repetições válidas começam em 1
+  const min = (field.startsWith('peso') || field.endsWith('_aq')) ? 0 : 1;
+  let val = Math.round(parseFloat(ex[field] ?? 0) + delta);
+  val = Math.max(min, val);
   ex[field] = val;
   const el = document.getElementById(`cnt-${exId}-${field}`);
-  if (el) el.textContent = val;
+  if (el) { if (el.tagName === 'INPUT') el.value = val; else el.textContent = val; }
+  scheduleSave();
+}
+
+// Peso digitado: mantém só dígitos e salva ao sair do campo
+function onlyDigits(el) {
+  el.value = el.value.replace(/\D/g, '');
+}
+
+function setPeso(secId, exId, field, el) {
+  const sec = state.sections.find(s => s.id === secId);
+  const ex = sec && sec.exercises.find(e => e.id === exId);
+  if (!ex) return;
+  const v = parseInt(el.value, 10);
+  if (isNaN(v)) { el.value = ex[field] ?? 0; return; } // vazio: volta ao último valor
+  ex[field] = Math.max(0, v);
+  el.value = ex[field];
   scheduleSave();
 }
 
@@ -849,7 +910,7 @@ function addExercise(secId) {
   const sec = state.sections.find(s => s.id === secId);
   if (!sec) return;
   if (!sec.exercises) sec.exercises = [];
-  sec.exercises.push({ id: genId(), name, peso: 0, series: 3, reps: 12, notes: '' });
+  sec.exercises.push({ id: genId(), name, peso_aq: 0, series_aq: 0, reps_aq: 0, peso: 0, series: 3, reps: 12 });
   closeModal();
   scheduleSave();
   render();
@@ -913,45 +974,45 @@ const DEFAULT_DATA = {
     {
       id: genId(), name: 'Quadríceps',
       exercises: [
-        { id: genId(), name: 'Agachamento Livre',             peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Cadeira Extensora',             peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Hack',                          peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Agachamento Búlgaro',           peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Panturrilha na Máquina',        peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Abdominal Funcional (Ab Wheel)',peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Agachamento Livre',             peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Cadeira Extensora',             peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Hack',                          peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Agachamento Búlgaro',           peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Panturrilha na Máquina',        peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Abdominal Funcional (Ab Wheel)',peso: 0, series: 3, reps: 12 },
       ]
     },
     {
       id: genId(), name: 'Ombro + Peito + Tríceps',
       exercises: [
-        { id: genId(), name: 'Desenvolvimento Halteres',  peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Elevação Lateral Polia',    peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Face Pull',                 peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Supino Halteres',           peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Rosca Tríceps (Corda)',     peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Tríceps (Banco)',           peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Desenvolvimento Halteres',  peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Elevação Lateral Polia',    peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Face Pull',                 peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Supino Halteres',           peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Rosca Tríceps (Corda)',     peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Tríceps (Banco)',           peso: 0, series: 3, reps: 12 },
       ]
     },
     {
       id: genId(), name: 'Posterior + Glúteo',
       exercises: [
-        { id: genId(), name: 'Stiff com Barra',           peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Extensão na Polia',         peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Elevação Pélvica (Smith)',  peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Abdutor na Máquina',        peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Mesa Flexora',              peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Abdominal',                 peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Stiff com Barra',           peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Extensão na Polia',         peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Elevação Pélvica (Smith)',  peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Abdutor na Máquina',        peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Mesa Flexora',              peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Abdominal',                 peso: 0, series: 3, reps: 12 },
       ]
     },
     {
       id: genId(), name: 'Costas + Bíceps',
       exercises: [
-        { id: genId(), name: 'Pulldown',                      peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Remada Barra Livre',            peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Rosca Direta Barra',            peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Rosca Martelo',                 peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Remada Halteres (Unilateral)',  peso: 0, series: 3, reps: 12, notes: '' },
-        { id: genId(), name: 'Abdominal',                     peso: 0, series: 3, reps: 12, notes: '' },
+        { id: genId(), name: 'Pulldown',                      peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Remada Barra Livre',            peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Rosca Direta Barra',            peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Rosca Martelo',                 peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Remada Halteres (Unilateral)',  peso: 0, series: 3, reps: 12 },
+        { id: genId(), name: 'Abdominal',                     peso: 0, series: 3, reps: 12 },
       ]
     }
   ]
@@ -962,6 +1023,7 @@ async function init() {
   loadState();
   if (state.sections.length === 0) {
     state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    migrateState();
     saveLocal();
   }
   render(); // renderiza na hora com os dados locais, sem esperar rede
